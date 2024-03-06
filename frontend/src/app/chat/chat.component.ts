@@ -3,6 +3,7 @@ import { Socket } from 'ngx-socket-io';
 import { CommonModule, NgClass, NgFor } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CookieService } from 'ngx-cookie-service';
 
 @Component({
   selector: 'app-chat',
@@ -14,7 +15,8 @@ export class ChatComponent implements OnInit {
   constructor(
     private socket: Socket,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cookieService: CookieService
   ) {}
 
   users: any[] = [];
@@ -24,19 +26,20 @@ export class ChatComponent implements OnInit {
   msg: string = '';
   messages: string[] = [];
   count: number = 0;
-  name: number = 0;
+  name!: string;
   userId!: number;
 
   ngOnInit() {
-    if (!localStorage.getItem('id')) {
-      this.userId = Math.random();
-      localStorage.setItem('id', this.userId.toString());
+    const n = localStorage.getItem('name');
+    if (this.cookieService.get('id') && n) {
+      this.name = n;
     } else {
-      this.userId = Number(localStorage.getItem('id'));
+      this.router.navigateByUrl('/');
     }
 
     this.socket.fromEvent('users').subscribe((users: any) => {
       this.users = JSON.parse(users);
+      console.log(this.users);
       this.count = this.users.filter(
         (r: any) => r.id === this.id
       )[0].usersOn.length;
@@ -53,7 +56,7 @@ export class ChatComponent implements OnInit {
     this.route.params.subscribe(({ id }) => {
       if (!id) return;
       this.id = id;
-      this.name = Math.random() * 1000;
+
       this.socket.emit('join', {
         roomId: this.id,
         user: {
