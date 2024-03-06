@@ -18,14 +18,24 @@ export class ChatComponent implements OnInit {
   ) {}
 
   users: any[] = [];
+  usersRoom: any[] = [];
   rooms = ['default', 'cine', 'juegos'];
   id = null;
   msg: string = '';
   messages: string[] = [];
+  count: number = 0;
+  name: number = 0;
 
   ngOnInit() {
     this.socket.fromEvent('users').subscribe((users: any) => {
       this.users = JSON.parse(users);
+      this.count = this.users.filter(
+        (r: any) => r.id === this.id
+      )[0].usersOn.length;
+
+      this.usersRoom = this.users.filter(
+        (r: any) => r.id === this.id
+      )[0].usersOn;
     });
 
     this.socket.fromEvent('message').subscribe((message: any) => {
@@ -35,17 +45,23 @@ export class ChatComponent implements OnInit {
     this.route.params.subscribe(({ id }) => {
       if (!id) return;
       this.id = id;
-
-      if (!this.users.filter((name) => name.id === id).includes('Fido')) {
-        this.socket.emit('join', { roomId: this.id, userName: 'Fido' });
-      }
+      this.name = Math.random() * 1000;
+      this.socket.emit('join', {
+        roomId: this.id,
+        userName: this.name,
+      });
     });
   }
 
   change(name: string): void {
-    this.socket.emit('leave', { roomId: this.id, userName: 'Fido' });
-    this.messages = [];
-    this.router.navigateByUrl('/chat/' + name);
+    if (name !== this.id) {
+      this.socket.emit('leave', {
+        roomId: this.id,
+        userName: this.name,
+      });
+      this.messages = [];
+      this.router.navigateByUrl('/chat/' + name);
+    }
   }
 
   sendMessage() {
