@@ -10,6 +10,7 @@ export const joinUser = (
   const room: RoomI = rooms.find((room: RoomI) => room.id === dto.roomId);
 
   if (!room) return rooms;
+  if (room.usersOn.includes(dto.userName)) return rooms;
 
   room.usersOn.push(dto.userName);
 
