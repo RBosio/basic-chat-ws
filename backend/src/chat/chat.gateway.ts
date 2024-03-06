@@ -8,10 +8,15 @@ import {
 import { Socket, Server } from 'socket.io';
 import { RoomI, UserI, joinUser, leaveUser } from 'src/utils/user';
 
+const getCookie = (client: Socket) => {
+  return Number(client.handshake.headers.cookie?.split('=')[1]);
+};
+
 @WebSocketGateway({
   cors: {
     origin: 'http://localhost:4200',
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -24,26 +29,58 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     { id: 'juegos', usersOn: [] },
   ];
 
-  handleConnection(client: any, ...args: any[]) {
-    console.log('client connected', client.id);
+  handleConnection(client: Socket, ...args: any[]) {
+    console.log('client connected', getCookie(client));
   }
 
-  handleDisconnect(client: any) {
-    console.log('client disconnected', client.id);
+  handleDisconnect(client: Socket) {
+    const cookie = getCookie(client);
+    if (cookie) {
+      this.closeConn(cookie);
+      console.log('client disconnected', getCookie(client));
+    } else {
+      console.log('no cookie');
+    }
+  }
+
+  closeConn(cookie: number) {
+    this.rooms.forEach((room, idx) => {
+      this.rooms[idx].usersOn = room.usersOn.filter(
+        (user) => user.userId !== cookie,
+      );
+    });
+
+    this.server.emit('users', JSON.stringify(this.rooms));
   }
 
   @SubscribeMessage('join')
   join(client: Socket, dto: { roomId: string; user: UserI }): string {
-    client.join(dto.roomId);
-    this.server.emit('users', JSON.stringify(joinUser(this.rooms, dto)));
-    return `joined to room: ${dto.roomId}`;
+    const cookie = getCookie(client);
+    if (cookie) {
+      client.join(cookie.toString());
+
+      this.server.emit(
+        'users',
+        JSON.stringify(joinUser(this.rooms, dto, cookie)),
+      );
+      return `joined to room: ${dto.roomId}`;
+    } else {
+      console.log('no cookie');
+    }
   }
 
   @SubscribeMessage('leave')
-  leave(client: Socket, dto: { roomId: string; user: UserI }): string {
-    client.leave(dto.roomId);
-    this.server.emit('users', JSON.stringify(leaveUser(this.rooms, dto)));
-    return `leaved to room: ${dto.roomId}`;
+  leave(client: Socket, dto: { roomId: string; userId: number }): string {
+    const cookie = getCookie(client);
+    if (cookie) {
+      client.leave(cookie.toString());
+
+      dto.userId = cookie;
+      this.server.emit('users', JSON.stringify(leaveUser(this.rooms, dto)));
+      return `leaved to room: ${dto.roomId}`;
+    } else {
+      console.log('no cookie');
+    }
   }
 
   @SubscribeMessage('send')
