@@ -8,7 +8,12 @@ import {
 import { Socket, Server } from 'socket.io';
 import { RoomI, joinUser, leaveUser } from 'src/utils/user';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: 'http://localhost:4200',
+    methods: ['GET', 'POST'],
+  },
+})
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
