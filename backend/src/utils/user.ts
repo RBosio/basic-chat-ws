@@ -1,17 +1,25 @@
 export interface RoomI {
   id: string;
-  usersOn: string[];
+  usersOn: UserI[];
+}
+
+export interface UserI {
+  userId: number;
+  name?: string;
 }
 
 export const joinUser = (
   rooms: RoomI[],
-  dto: { roomId: string; userName: string },
+  dto: { roomId: string; user: UserI },
+  cookie: number,
 ) => {
   const room: RoomI = rooms.find((room: RoomI) => room.id === dto.roomId);
 
   if (!room) return rooms;
+  if (room.usersOn.find((user) => user.userId === cookie)) return rooms;
 
-  room.usersOn.push(dto.userName);
+  dto.user.userId = cookie;
+  room.usersOn.push(dto.user);
 
   const idx: number = rooms.findIndex((room: RoomI) => room.id === dto.roomId);
   rooms[idx] = room;
@@ -21,7 +29,7 @@ export const joinUser = (
 
 export const leaveUser = (
   rooms: RoomI[],
-  dto: { roomId: string; userName: string },
+  dto: { roomId: string; userId: number },
 ) => {
   const room: RoomI = rooms.find((room: RoomI) => room.id === dto.roomId);
 
@@ -29,7 +37,7 @@ export const leaveUser = (
 
   const idx: number = rooms.findIndex((room: RoomI) => room.id === dto.roomId);
 
-  const roomIdx = room.usersOn.findIndex((user) => user === dto.userName);
+  const roomIdx = room.usersOn.findIndex((user) => user.userId === dto.userId);
   if (roomIdx === -1) return rooms;
   room.usersOn.splice(roomIdx, 1);
 
