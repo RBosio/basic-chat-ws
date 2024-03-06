@@ -10,7 +10,9 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(
       SocketIoModule.forRoot({
         url: 'http://localhost:3000',
-        options: {},
+        options: {
+          withCredentials: true,
+        },
       })
     ),
   ],
