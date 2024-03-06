@@ -25,8 +25,16 @@ export class ChatComponent implements OnInit {
   messages: string[] = [];
   count: number = 0;
   name: number = 0;
+  userId!: number;
 
   ngOnInit() {
+    if (!localStorage.getItem('id')) {
+      this.userId = Math.random();
+      localStorage.setItem('id', this.userId.toString());
+    } else {
+      this.userId = Number(localStorage.getItem('id'));
+    }
+
     this.socket.fromEvent('users').subscribe((users: any) => {
       this.users = JSON.parse(users);
       this.count = this.users.filter(
@@ -48,7 +56,10 @@ export class ChatComponent implements OnInit {
       this.name = Math.random() * 1000;
       this.socket.emit('join', {
         roomId: this.id,
-        userName: this.name,
+        user: {
+          id: this.userId,
+          name: this.name,
+        },
       });
     });
   }
@@ -57,7 +68,10 @@ export class ChatComponent implements OnInit {
     if (name !== this.id) {
       this.socket.emit('leave', {
         roomId: this.id,
-        userName: this.name,
+        user: {
+          id: this.userId,
+          name: this.name,
+        },
       });
       this.messages = [];
       this.router.navigateByUrl('/chat/' + name);

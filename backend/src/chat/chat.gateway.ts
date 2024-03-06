@@ -6,7 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { RoomI, joinUser, leaveUser } from 'src/utils/user';
+import { RoomI, UserI, joinUser, leaveUser } from 'src/utils/user';
 
 @WebSocketGateway({
   cors: {
@@ -33,14 +33,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join')
-  join(client: Socket, dto: { roomId: string; userName: string }): string {
+  join(client: Socket, dto: { roomId: string; user: UserI }): string {
     client.join(dto.roomId);
     this.server.emit('users', JSON.stringify(joinUser(this.rooms, dto)));
     return `joined to room: ${dto.roomId}`;
   }
 
   @SubscribeMessage('leave')
-  leave(client: Socket, dto: { roomId: string; userName: string }): string {
+  leave(client: Socket, dto: { roomId: string; user: UserI }): string {
     client.leave(dto.roomId);
     this.server.emit('users', JSON.stringify(leaveUser(this.rooms, dto)));
     return `leaved to room: ${dto.roomId}`;
