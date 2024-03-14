@@ -14,7 +14,7 @@ const getCookie = (client: Socket) => {
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:4200',
+    origin: true,
     methods: ['GET', 'POST'],
     credentials: true,
   },
