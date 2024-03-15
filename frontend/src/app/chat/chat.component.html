@@ -15,10 +15,30 @@
         </div>
       </div>
     </div>
-    <div class="w-1/2 bg-white rounded-lg h-full relative overflow-hidden">
-      <div class="flex flex-col">
-        <div class="flex items-center" *ngFor="let message of messages">
-          {{ message }}
+    <div class="w-1/2 bg-white rounded-lg h-full relative">
+      <div
+        id="scroller"
+        class="flex flex-col p-2 h-[calc(100%-72px)] overflow-y-scroll"
+      >
+        <div
+          class="flex flex-col w-2/3 my-2"
+          [ngClass]="message.user.name === name ? 'ml-auto' : ''"
+          *ngFor="let message of messages"
+        >
+          <h4
+            class="text-xl text-emerald-600"
+            [ngClass]="message.user.name === name ? 'text-right' : ''"
+          >
+            {{ message.user.name }}
+          </h4>
+          <div [ngClass]="message.user.name === name ? 'text-right' : ''">
+            <p>
+              {{ message.msg }}
+            </p>
+            <p class="text-gray-400 text-xs">
+              {{ message.date }}
+            </p>
+          </div>
         </div>
       </div>
       <form

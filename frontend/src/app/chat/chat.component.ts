@@ -4,6 +4,7 @@ import { CommonModule, NgClass, NgFor } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CookieService } from 'ngx-cookie-service';
+import moment from 'moment';
 
 @Component({
   selector: 'app-chat',
@@ -24,7 +25,7 @@ export class ChatComponent implements OnInit {
   rooms = ['default', 'cine', 'juegos'];
   id = null;
   msg: string = '';
-  messages: string[] = [];
+  messages: any[] = [];
   count: number = 0;
   name!: string;
   userId!: number;
@@ -39,22 +40,33 @@ export class ChatComponent implements OnInit {
 
     this.socket.fromEvent('users').subscribe((users: any) => {
       this.users = JSON.parse(users);
-      console.log(this.users);
       this.count = this.users.filter(
         (r: any) => r.id === this.id
-      )[0].usersOn.length;
+      )[0]?.usersOn.length;
 
       this.usersRoom = this.users.filter(
         (r: any) => r.id === this.id
-      )[0].usersOn;
+      )[0]?.usersOn;
     });
 
     this.socket.fromEvent('message').subscribe((message: any) => {
+      message.date = moment(new Date()).format('LLL');
+
       this.messages.push(message);
+
+      setTimeout(() => {
+        const scroller = document.getElementById('scroller');
+        if (scroller) {
+          scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight;
+        }
+      }, 200);
     });
 
     this.route.params.subscribe(({ id }) => {
-      if (!id) return;
+      if (!id || (id !== 'default' && id !== 'cine' && id !== 'juegos')) {
+        this.router.navigateByUrl('chat/default');
+        return;
+      }
       this.id = id;
 
       this.socket.emit('join', {
@@ -82,7 +94,13 @@ export class ChatComponent implements OnInit {
   }
 
   sendMessage() {
-    this.socket.emit('send', { roomId: this.id, message: this.msg });
+    this.socket.emit('send', {
+      roomId: this.id,
+      message: this.msg,
+      user: {
+        name: this.name,
+      },
+    });
     this.msg = '';
   }
 }
